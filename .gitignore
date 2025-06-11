@@ -1,0 +1,8 @@
+node_modules/
+.env
+app.log
+.venv/
+.idea/
+__pycache__/
+abandoned_files/
+.DS_Store

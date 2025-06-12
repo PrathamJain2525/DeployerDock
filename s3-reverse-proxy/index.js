@@ -7,9 +7,7 @@ const app = express();
 const PORT = process.env.PORT || 8000;
 
 const proxy = httpProxy.createProxyServer();
-const BucketName = process.env.BucketName;
-const Region = process.env.Region;
-const BasePath = `https://${BucketName}.s3.${Region}.amazonaws.com/__output`;
+const BasePath = process.env.BasePathURL;
 
 app.use((req, res) => {
   // FUTURE TASK: DATABASE INTEGRATION

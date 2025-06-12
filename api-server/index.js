@@ -36,7 +36,7 @@ app.post("/api", async (req, res) => {
   const command = new RunTaskCommand({
     cluster: config.CLUSTER,
     taskDefinition: config.TASK,
-    launchType: "FARGATE",
+    launchType: process.env.AWS_LAUNCH_TYPE || "FARGATE",
     count: 1,
     networkConfiguration: {
       awsvpcConfiguration: {
@@ -52,7 +52,7 @@ app.post("/api", async (req, res) => {
     overrides: {
       containerOverrides: [
         {
-          name: "builder-image",
+          name: process.env.AWS_CONTAINER_IMAGE_NAME,
           environment: [
             {
               name: "GIT_REPOSITORY_URL",

@@ -5,7 +5,7 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import mime from "mime-types";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
-dotenv.config({ path: path.join(__dirname, ".env") });
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,7 +33,7 @@ async function init() {
   const buildCommand = process.env.BUILD_COMMAND || "npm run build";
   const installCommand = process.env.INSTALL_COMMAND || "npm install"; // add any manual command in future (if you want to) - maybe add serverless-http
 
-  const proc = exec(`cd ${repoPath} ${installCommand} && ${buildCommand}`);
+  const proc = exec(`cd ${repoPath} && ${installCommand} && ${buildCommand}`);
   proc.stdout.on("data", function (data) {
     // BACKLOG : capture the logs
     console.log(data.toString()); // BACKLOG :use fast db and stream them to user

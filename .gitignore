@@ -6,3 +6,4 @@ app.log
 __pycache__/
 abandoned_files/
 .DS_Store
+.vscode/

@@ -4,6 +4,7 @@ import fs from "fs";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import mime from "mime-types";
 import { fileURLToPath } from "url";
+import redis from "ioredis";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -18,6 +19,18 @@ const s3Client = new S3Client({
   },
 });
 
+const redisServiceUri = process.env.REDIS_SERVICE_URI;
+if (!redisServiceUri) {
+  console.error("REDIS_SERVICE_URI is not set.");
+  process.exit(1);
+}
+
+const publisher = new redis(redisServiceUri);
+
+function publishLog(log) {
+  publisher.publish(`build_logs:${PROJECT_ID}`, JSON.stringify(log));
+}
+
 const PROJECT_ID = process.env.PROJECT_ID;
 if (!PROJECT_ID) {
   console.error("PROJECT_ID is not set.");
@@ -29,29 +42,37 @@ if (!PROJECT_ID) {
 const BASE_DIR = process.env.BASE_DIR || "";
 
 async function init() {
+  publishLog("Build started for project: " + PROJECT_ID);
   const repoPath = path.join(__dirname, "output", BASE_DIR); // where we cloned the repo
   const buildCommand = process.env.BUILD_COMMAND || "npm run build";
   const installCommand = process.env.INSTALL_COMMAND || "npm install"; // add any manual command in future (if you want to) - maybe add serverless-http
 
   const proc = exec(`cd ${repoPath} && ${installCommand} && ${buildCommand}`);
   proc.stdout.on("data", function (data) {
-    // BACKLOG : capture the logs
-    console.log(data.toString()); // BACKLOG :use fast db and stream them to user
+    console.log(data.toString());
+    publishLog(data.toString());
   });
 
   proc.stdout.on("error", function (data) {
     console.log("Error", data.toString());
+    publishLog("Error: " + data.toString());
   });
 
   const buildFolderName = process.env.BUILD_FOLDER_NAME || "dist";
   proc.on("close", async function () {
     console.log("Build Complete");
+    publishLog("Build completed for project: " + PROJECT_ID);
     const distFolderPath = path.join(__dirname, "output", buildFolderName);
     const distFolderContents = fs.readdirSync(distFolderPath, {
       recursive: true,
     });
 
+    console.log("Uploading files to S3...");
+    publishLog("Uploading files to S3 for project: " + PROJECT_ID);
+
     for (const filePath of distFolderContents) {
+      console.log("Uploading file:", filePath);
+      publishLog("Uploading file: " + filePath + " for project: " + PROJECT_ID);
       const fullFilePath = path.join(distFolderPath, filePath);
       if (fs.lstatSync(fullFilePath).isDirectory()) continue;
 
@@ -63,8 +84,13 @@ async function init() {
       });
 
       await s3Client.send(command);
-      console.log("DONE");
+      console.log(`Uploaded ${filePath} to S3`);
+      publishLog(`Uploaded ${filePath} to S3 for project: ${PROJECT_ID}`);
     }
+    console.log("DONE");
+    publishLog("All files uploaded to S3 for project: " + PROJECT_ID);
+    publisher.disconnect();
+    console.log("Redis publisher disconnected.");
   });
 }
 

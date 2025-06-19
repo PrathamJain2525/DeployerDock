@@ -4,9 +4,11 @@ import { generateSlug } from "random-word-slugs";
 import { ECSClient, RunTaskCommand } from "@aws-sdk/client-ecs";
 import { Server } from "socket.io";
 import redis from "ioredis";
+import cors from "cors";
 dotenv.config();
 const PORT = parseInt(process.env.PORT, 10) || 9000;
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
@@ -48,11 +50,15 @@ io.on("connection", (socket) => {
 
 app.post("/api", async (req, res) => {
   console.log(req.body);
-  const gitURL = req.body?.gitURL;
-  if (!gitURL) {
-    return res.status(400).json({ error: "Git URL is required" });
+  const GIT_REPOSITORY_URL = req.body?.GIT_REPOSITORY_URL;
+  if (!GIT_REPOSITORY_URL) {
+    return res.status(400).json({ error: "GIT_REPOSITORY_URL is required" });
   }
-  const slug = generateSlug();
+  const slug = req.body.PROJECT_ID || generateSlug();
+  const BASE_DIR = req.body.BASE_DIR;
+  const BUILD_COMMAND = req.body.BUILD_COMMAND;
+  const INSTALL_COMMAND = req.body.INSTALL_COMMAND;
+  const BUILD_FOLDER_NAME = req.body.BUILD_FOLDER_NAME;
 
   const command = new RunTaskCommand({
     cluster: config.CLUSTER,
@@ -77,11 +83,27 @@ app.post("/api", async (req, res) => {
           environment: [
             {
               name: "GIT_REPOSITORY_URL",
-              value: gitURL,
+              value: GIT_REPOSITORY_URL,
             },
             {
               name: "PROJECT_ID",
               value: slug,
+            },
+            {
+              name: "BASE_DIR",
+              value: BASE_DIR,
+            },
+            {
+              name: "BUILD_COMMAND",
+              value: BUILD_COMMAND,
+            },
+            {
+              name: "INSTALL_COMMAND",
+              value: INSTALL_COMMAND,
+            },
+            {
+              name: "BUILD_FOLDER_NAME",
+              value: BUILD_FOLDER_NAME,
             },
           ],
         },

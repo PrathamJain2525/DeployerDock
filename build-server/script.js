@@ -44,6 +44,14 @@ const BASE_DIR = process.env.BASE_DIR || "";
 async function init() {
   publishLog("Build started for project: " + PROJECT_ID);
   const repoPath = path.join(__dirname, "output", BASE_DIR); // where we cloned the repo
+  
+  // Check if the output directory exists
+  if (!fs.existsSync(repoPath)) {
+    console.error(`Output directory does not exist: ${repoPath}`);
+    publishLog("Output directory does not exist: " + repoPath);
+    process.exit(1);
+  }
+
   const buildCommand = process.env.BUILD_COMMAND || "npm run build";
   const installCommand = process.env.INSTALL_COMMAND || "npm install"; // add any manual command in future (if you want to) - maybe add serverless-http
 
@@ -63,6 +71,11 @@ async function init() {
     console.log("Build Complete");
     publishLog("Build completed for project: " + PROJECT_ID);
     const distFolderPath = path.join(__dirname, "output", buildFolderName);
+    if (!fs.existsSync(distFolderPath)) {
+      console.error(`Build folder does not exist: ${distFolderPath}`);
+      publishLog("Build folder does not exist: " + buildFolderName);
+      process.exit(1);
+    }
     const distFolderContents = fs.readdirSync(distFolderPath, {
       recursive: true,
     });

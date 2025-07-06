@@ -11,6 +11,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// the deployer thing setup
 if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
   console.error("AWS credentials are not set in environment variables.");
   process.exit(1);
@@ -26,26 +27,6 @@ const ecsClient = new ECSClient({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   },
-});
-
-const redisServiceUri = process.env.REDIS_SERVICE_URI;
-
-const subscriber = new redis(redisServiceUri);
-
-const io = new Server({ cors: "*" });
-
-const SOCKET_PORT = process.env.SOCKET_PORT || PORT + 1;
-
-io.listen(SOCKET_PORT, () => {
-  console.log(`Socket.io server is running on port ${SOCKET_PORT}`);
-});
-
-io.on("connection", (socket) => {
-  socket.emit("message", "Connected to the socket");
-  socket.on("Subscribe", (channel) => {
-    socket.join(channel);
-    socket.emit("message", `Joined ${channel}`);
-  });
 });
 
 app.post("/api", async (req, res) => {
@@ -121,6 +102,31 @@ app.post("/api", async (req, res) => {
   });
 });
 
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
+
+// Socket.io setup
+const redisServiceUri = process.env.REDIS_SERVICE_URI;
+
+const subscriber = new redis(redisServiceUri);
+
+const io = new Server({ cors: "*" });
+
+const SOCKET_PORT = process.env.SOCKET_PORT || PORT + 1;
+
+io.listen(SOCKET_PORT, () => {
+  console.log(`Socket.io server is running on port ${SOCKET_PORT}`);
+});
+
+io.on("connection", (socket) => {
+  socket.emit("message", "Connected to the socket");
+  socket.on("Subscribe", (channel) => {
+    socket.join(channel);
+    socket.emit("message", `Joined ${channel}`);
+  });
+});
+
 async function initRedis() {
   console.log("Subscribed to logs...");
   subscriber.psubscribe("build_logs:*");
@@ -130,7 +136,3 @@ async function initRedis() {
 }
 
 initRedis();
-
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});

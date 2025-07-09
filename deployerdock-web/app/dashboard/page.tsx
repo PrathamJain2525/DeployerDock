@@ -133,7 +133,7 @@ export default function Dashboard() {
         return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100";
     }
   };
-  
+
   const handlePreviewClick = (e: React.MouseEvent, projectId: string) => {
     e.preventDefault();
     if (
@@ -351,10 +351,14 @@ export default function Dashboard() {
                     <Button
                       className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
                       disabled={loading}
+                      asChild
                       onClick={handleDeploy}
                     >
-                      <Zap className="w-4 h-4 mr-2" />
-                      Deploy Now
+                      <div>
+                        {" "}
+                        <Zap className="w-4 h-4 mr-2" />
+                        Deploy Now
+                      </div>
                     </Button>
                   </div>
                 </CardContent>
@@ -419,8 +423,10 @@ export default function Dashboard() {
                               handlePreviewClick(e, project.PROJECT_ID)
                             }
                           >
+                            <div>
                             <ExternalLink className="w-3 h-3 mr-1" />
                             Preview
+                            </div>
                           </Button>
                           <Button variant="outline" size="sm" asChild>
                             <Link href={`/projects/${project.PROJECT_ID}`}>

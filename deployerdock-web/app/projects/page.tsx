@@ -251,8 +251,10 @@ export default function ProjectsPage() {
                       asChild
                       onClick={(e) => handlePreviewClick(e, project.PROJECT_ID)}
                     >
-                      <ExternalLink className="w-3 h-3 mr-1" />
-                      Preview
+                      <div>
+                        <ExternalLink className="w-3 h-3 mr-1" />
+                        Preview
+                      </div>
                     </Button>
                     <Button
                       variant="outline"

@@ -344,8 +344,10 @@ export default function ProjectDetailsPage() {
             </div>
             <div className="flex space-x-2">
               <Button variant="outline" asChild onClick={handleVisitSiteClick}>
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Visit Site
+                <div>
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Visit Site
+                </div>
               </Button>
               <Button
                 onClick={handleRedeploy}

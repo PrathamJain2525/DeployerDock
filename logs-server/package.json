@@ -4,18 +4,20 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "build": "tsc"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@aws-sdk/client-ecs": "^3.828.0",
+    "@socket.io/redis-adapter": "^8.3.0",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
-    "ioredis": "^5.6.1",
-    "random-word-slugs": "^0.1.7",
+    "redis": "^5.6.0",
     "socket.io": "^4.8.1"
   }
 }

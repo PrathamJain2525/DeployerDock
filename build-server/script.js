@@ -4,12 +4,18 @@ import fs from "fs";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import mime from "mime-types";
 import { fileURLToPath } from "url";
-import redis from "ioredis";
+import { createClient } from "redis";
 import dotenv from "dotenv";
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const REDIS_HOST = process.env.REDIS_HOST;
+const REDIS_PORT = parseInt(process.env.REDIS_PORT || "6379");
+const REDIS_USERNAME = process.env.REDIS_USERNAME || "default";
+const REDIS_PASSWORD = process.env.REDIS_PASSWORD;
+const PROJECT_ID = process.env.PROJECT_ID;
 
 const s3Client = new S3Client({
   region: "ap-south-1",
@@ -19,19 +25,46 @@ const s3Client = new S3Client({
   },
 });
 
-const redisServiceUri = process.env.REDIS_SERVICE_URI;
-if (!redisServiceUri) {
-  console.error("REDIS_SERVICE_URI is not set.");
-  process.exit(1);
+if (!REDIS_HOST || !REDIS_PASSWORD) {
+  console.error("Redis credentials are not set properly in env.");
 }
 
-const publisher = new redis(redisServiceUri);
+let publisher = null;
 
-function publishLog(log) {
-  publisher.publish(`build_logs:${PROJECT_ID}`, JSON.stringify(log));
+async function initRedisPublisher() {
+  const client = createClient({
+    username: REDIS_USERNAME,
+    password: REDIS_PASSWORD,
+    socket: {
+      host: REDIS_HOST,
+      port: REDIS_PORT,
+    },
+  });
+
+  client.on("error", (err) => {
+    console.error("Redis Publisher Error:", err);
+  });
+
+  try {
+    await client.connect();
+    console.log("Connected to Redis (Publisher)");
+    publisher = client;
+  } catch (err) {
+    console.error("Failed to connect to Redis:", err);
+  }
 }
 
-const PROJECT_ID = process.env.PROJECT_ID;
+async function publishLog(log) {
+  if (publisher) {
+    await publisher.publish(`build_logs:${PROJECT_ID}`, JSON.stringify(log));
+  } else {
+    console.log(log);
+    console.error("Redis publisher is not initialized. Cannot publish log.");
+  }
+}
+
+await initRedisPublisher();
+
 if (!PROJECT_ID) {
   console.error("PROJECT_ID is not set.");
   process.exit(1);
@@ -42,13 +75,13 @@ if (!PROJECT_ID) {
 const BASE_DIR = process.env.BASE_DIR || "";
 
 async function init() {
-  publishLog("Build started for project: " + PROJECT_ID);
+  await publishLog("Build started for project: " + PROJECT_ID);
   const repoPath = path.join(__dirname, "output", BASE_DIR); // where we cloned the repo
-  
+
   // Check if the output directory exists
   if (!fs.existsSync(repoPath)) {
     console.error(`Output directory does not exist: ${repoPath}`);
-    publishLog("Output directory does not exist: " + repoPath);
+    await publishLog("ERROR: Output directory does not exist " + repoPath);
     process.exit(1);
   }
 
@@ -56,24 +89,24 @@ async function init() {
   const installCommand = process.env.INSTALL_COMMAND || "npm install"; // add any manual command in future (if you want to) - maybe add serverless-http
 
   const proc = exec(`cd ${repoPath} && ${installCommand} && ${buildCommand}`);
-  proc.stdout.on("data", function (data) {
+  proc.stdout.on("data", async function (data) {
     console.log(data.toString());
-    publishLog(data.toString());
+    await publishLog(data.toString());
   });
 
-  proc.stdout.on("error", function (data) {
+  proc.stdout.on("error", async function (data) {
     console.log("Error", data.toString());
-    publishLog("Error: " + data.toString());
+    await publishLog("ERROR: " + data.toString());
   });
 
   const buildFolderName = process.env.BUILD_FOLDER_NAME || "dist";
   proc.on("close", async function () {
     console.log("Build Complete");
-    publishLog("Build completed for project: " + PROJECT_ID);
+    await publishLog("Build completed for project: " + PROJECT_ID);
     const distFolderPath = path.join(__dirname, "output", buildFolderName);
     if (!fs.existsSync(distFolderPath)) {
       console.error(`Build folder does not exist: ${distFolderPath}`);
-      publishLog("Build folder does not exist: " + buildFolderName);
+      await publishLog("Build folder does not exist: " + buildFolderName);
       process.exit(1);
     }
     const distFolderContents = fs.readdirSync(distFolderPath, {
@@ -81,11 +114,13 @@ async function init() {
     });
 
     console.log("Uploading files to S3...");
-    publishLog("Uploading files to S3 for project: " + PROJECT_ID);
+    await publishLog("Uploading files to S3 for project: " + PROJECT_ID);
 
     for (const filePath of distFolderContents) {
       console.log("Uploading file:", filePath);
-      publishLog("Uploading file: " + filePath + " for project: " + PROJECT_ID);
+      await publishLog(
+        "Uploading file: " + filePath + " for project: " + PROJECT_ID
+      );
       const fullFilePath = path.join(distFolderPath, filePath);
       if (fs.lstatSync(fullFilePath).isDirectory()) continue;
 
@@ -98,10 +133,10 @@ async function init() {
 
       await s3Client.send(command);
       console.log(`Uploaded ${filePath} to S3`);
-      publishLog(`Uploaded ${filePath} to S3 for project: ${PROJECT_ID}`);
+      await publishLog(`Uploaded ${filePath} to S3 for project: ${PROJECT_ID}`);
     }
     console.log("DONE");
-    publishLog("All files uploaded to S3 for project: " + PROJECT_ID);
+    await publishLog("Completed the build for project: " + PROJECT_ID);
     publisher.disconnect();
     console.log("Redis publisher disconnected.");
   });

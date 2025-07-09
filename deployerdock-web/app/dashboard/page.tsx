@@ -133,6 +133,23 @@ export default function Dashboard() {
         return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100";
     }
   };
+  
+  const handlePreviewClick = (e: React.MouseEvent, projectId: string) => {
+    e.preventDefault();
+    if (
+      !process.env.NEXT_PUBLIC_APP_URL_DOMAIN ||
+      process.env.NEXT_PUBLIC_APP_URL_DOMAIN.startsWith("localhost")
+    ) {
+      toast.error(
+        "Preview links are not available currently. Sorry for the inconvenience."
+      );
+      return;
+    }
+    window.open(
+      `http://${projectId}.${process.env.NEXT_PUBLIC_APP_URL_DOMAIN}`,
+      "_blank"
+    );
+  };
 
   return (
     <div className={`${isDarkMode ? "dark" : ""}`}>
@@ -394,15 +411,16 @@ export default function Dashboard() {
                           <Badge className={getStatusColor(project.STATUS)}>
                             {project.STATUS}
                           </Badge>
-                          <Button variant="outline" size="sm" asChild>
-                            <a
-                              href={`http://${project.PROJECT_ID}.${process.env.NEXT_PUBLIC_APP_URL_DOMAIN}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              <ExternalLink className="w-3 h-3 mr-1" />
-                              Preview
-                            </a>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            asChild
+                            onClick={(e) =>
+                              handlePreviewClick(e, project.PROJECT_ID)
+                            }
+                          >
+                            <ExternalLink className="w-3 h-3 mr-1" />
+                            Preview
                           </Button>
                           <Button variant="outline" size="sm" asChild>
                             <Link href={`/projects/${project.PROJECT_ID}`}>

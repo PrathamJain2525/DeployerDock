@@ -192,6 +192,18 @@ export default function ProjectDetailsPage() {
             }),
           });
           // visit site in new tab
+          toast.success(
+            `Project ${project?.PROJECT_ID} is live! Visiting site...`
+          );
+          if (
+            !process.env.NEXT_PUBLIC_APP_URL_DOMAIN ||
+            process.env.NEXT_PUBLIC_APP_URL_DOMAIN.startsWith("localhost")
+          ) {
+            toast.error(
+              "Preview links are not available currently. Sorry for the inconvenience."
+            );
+            return;
+          }
           window.open(
             `http://${project?.PROJECT_ID}.${process.env.NEXT_PUBLIC_APP_URL_DOMAIN}`,
             "_blank"
@@ -243,7 +255,24 @@ export default function ProjectDetailsPage() {
     URL.revokeObjectURL(url);
   };
 
-  if(!isLoaded) {
+  const handleVisitSiteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (
+      !process.env.NEXT_PUBLIC_APP_URL_DOMAIN ||
+      process.env.NEXT_PUBLIC_APP_URL_DOMAIN.startsWith("localhost")
+    ) {
+      toast.error(
+        "Preview links are not available currently. Sorry for the inconvenience."
+      );
+      return;
+    }
+    window.open(
+      `http://${project?.PROJECT_ID}.${process.env.NEXT_PUBLIC_APP_URL_DOMAIN}`,
+      "_blank"
+    );
+  };
+
+  if (!isLoaded) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
         <div className="flex flex-col items-center">
@@ -314,15 +343,9 @@ export default function ProjectDetailsPage() {
               </div>
             </div>
             <div className="flex space-x-2">
-              <Button variant="outline" asChild>
-                <a
-                  href={`http://${project?.PROJECT_ID}.${process.env.NEXT_PUBLIC_APP_URL_DOMAIN}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Visit Site
-                </a>
+              <Button variant="outline" asChild onClick={handleVisitSiteClick}>
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Visit Site
               </Button>
               <Button
                 onClick={handleRedeploy}

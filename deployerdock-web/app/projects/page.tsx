@@ -23,6 +23,7 @@ import Image from "next/image";
 import { useUser } from "@clerk/nextjs";
 import { projectType } from "@/types/project";
 import { useTheme } from "@/context/ThemeContext";
+import { toast } from "sonner";
 
 export default function ProjectsPage() {
   const { isDarkMode, setIsDarkMode } = useTheme();
@@ -68,6 +69,25 @@ export default function ProjectsPage() {
       filterStatus === "all" || project.STATUS === filterStatus;
     return matchesSearch && matchesFilter;
   });
+
+  const handlePreviewClick = (e: React.MouseEvent, PROJECT_ID: string) => {
+    e.preventDefault();
+    if (
+      !process.env.NEXT_PUBLIC_APP_URL_DOMAIN ||
+      process.env.NEXT_PUBLIC_APP_URL_DOMAIN.startsWith("localhost")
+    ) {
+      toast.error(
+        "Preview links are not available currently. Sorry for the inconvenience."
+      );
+      return;
+    }
+    if (PROJECT_ID) {
+      window.open(
+        `https://${PROJECT_ID}.${process.env.NEXT_PUBLIC_APP_URL_DOMAIN}`,
+        "_blank"
+      );
+    }
+  };
 
   return (
     <div className={`${isDarkMode ? "dark" : ""}`}>
@@ -229,15 +249,10 @@ export default function ProjectsPage() {
                       size="sm"
                       className="flex-1 bg-transparent"
                       asChild
+                      onClick={(e) => handlePreviewClick(e, project.PROJECT_ID)}
                     >
-                      <a
-                        href={`https://${project.PROJECT_ID}.${process.env.NEXT_PUBLIC_APP_URL_DOMAIN}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <ExternalLink className="w-3 h-3 mr-1" />
-                        Preview
-                      </a>
+                      <ExternalLink className="w-3 h-3 mr-1" />
+                      Preview
                     </Button>
                     <Button
                       variant="outline"

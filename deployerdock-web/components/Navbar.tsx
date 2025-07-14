@@ -58,7 +58,7 @@ const Navbar = () => {
               className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
             >
               {isDarkMode ? (
-                <Sun className="w-4 h-4" />
+                <Sun className="w-4 h-4 dark:text-white" />
               ) : (
                 <Moon className="w-4 h-4" />
               )}

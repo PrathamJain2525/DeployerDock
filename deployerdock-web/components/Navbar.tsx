@@ -115,9 +115,9 @@ const Navbar = () => {
               className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800"
             >
               {isMenuOpen ? (
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5 dark:text-white" />
               ) : (
-                <Menu className="w-5 h-5" />
+                <Menu className="w-5 h-5 dark:text-white" />
               )}
             </button>
           </div>

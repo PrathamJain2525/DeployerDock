@@ -22,18 +22,19 @@ const Footer = () => {
             <h3 className="font-semibold mb-4">Product</h3>
             <ul className="space-y-2 text-gray-400">
               <li>
-                <Link href="#" className="hover:text-white transition-colors">
+                <Link
+                  href="#features"
+                  className="hover:text-white transition-colors"
+                >
                   Features
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-white transition-colors">
-                  Pricing
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-white transition-colors">
-                  Documentation
+                <Link
+                  href="#how-it-works"
+                  className="hover:text-white transition-colors"
+                >
+                  How it Works
                 </Link>
               </li>
             </ul>

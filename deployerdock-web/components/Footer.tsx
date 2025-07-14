@@ -51,12 +51,12 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-white transition-colors">
+                <Link href="https://pushpitjain.medium.com/" className="hover:text-white transition-colors">
                   Blog
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-white transition-colors">
+                <Link href="mailto:pushpitjain2006@gmail.com" className="hover:text-white transition-colors">
                   Careers
                 </Link>
               </li>
@@ -66,18 +66,18 @@ const Footer = () => {
             <h3 className="font-semibold mb-4">Connect</h3>
             <ul className="space-y-2 text-gray-400">
               <li>
-                <Link href="#" className="hover:text-white transition-colors">
-                  Twitter
+                <Link href="https://x.com/Pushpit_jain_18" className="hover:text-white transition-colors">
+                  X (Twitter)
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-white transition-colors">
+                <Link href="https://github.com/pushpitjain2006/" className="hover:text-white transition-colors">
                   GitHub
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-white transition-colors">
-                  Discord
+                <Link href="https://www.linkedin.com/in/pushpitjain2006/" className="hover:text-white transition-colors">
+                  LinkedIn
                 </Link>
               </li>
             </ul>

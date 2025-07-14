@@ -65,7 +65,7 @@ const Hero = () => {
                 <div className="flex items-center space-x-4 p-4 bg-green-100 dark:bg-green-900 rounded-lg">
                   <Globe className="w-5 h-5 text-green-500" />
                   <span className="text-sm font-mono">
-                    Live at https://your-app.deployerdock.com
+                    Live at https://your-app.pushpitjain.tech
                   </span>
                 </div>
               </div>

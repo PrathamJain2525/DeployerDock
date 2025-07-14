@@ -146,15 +146,20 @@ const Navbar = () => {
             >
               About
             </Link>
-            <Button variant="outline" size="lg">
-              Login
-            </Button>
-            <Button
-              size="lg"
-              className="bg-gradient-to-r from-blue-500 to-purple-600"
-            >
-              Sign Up
-            </Button>
+            <SignInButton mode="modal">
+              <Button variant={isDarkMode ? "secondary" : "outline"} size="sm">
+                Login
+              </Button>
+            </SignInButton>
+
+            <SignUpButton mode="modal">
+              <Button
+                size="sm"
+                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+              >
+                Sign Up
+              </Button>
+            </SignUpButton>
           </div>
         </div>
       )}

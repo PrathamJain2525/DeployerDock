@@ -18,7 +18,7 @@ const REDIS_PASSWORD = process.env.REDIS_PASSWORD;
 const PROJECT_ID = process.env.PROJECT_ID;
 
 const s3Client = new S3Client({
-  region: "ap-south-1",
+  region: "Europe (Stockholm) eu-north-1",
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
@@ -125,7 +125,7 @@ async function init() {
       if (fs.lstatSync(fullFilePath).isDirectory()) continue;
 
       const command = new PutObjectCommand({
-        Bucket: "kodo-hashira-universal-bucket",
+        Bucket: "vercel-clone-output-pratham ",
         Key: `__output/${PROJECT_ID}/${filePath}`,
         Body: fs.createReadStream(fullFilePath),
         ContentType: mime.lookup(filePath),

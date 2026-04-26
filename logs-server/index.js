@@ -9,6 +9,7 @@ dotenv.config();
 
 const PORT = parseInt(process.env.PORT, 10) || 9000;
 const SOCKET_PORT = process.env.SOCKET_PORT || PORT + 1 || 9001;
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -29,33 +30,51 @@ let subscriber = null;
 const pubClient = createClient({
   username: REDIS_USERNAME,
   password: REDIS_PASSWORD,
-  socket: { host: REDIS_HOST, port: REDIS_PORT },
+  socket: {
+    host: REDIS_HOST,
+    port: REDIS_PORT,
+  },
 });
 
 subscriber = pubClient.duplicate();
 
-pubClient.on("error", (err) => console.error("Redis Pub Error:", err));
-subscriber.on("error", (err) => console.error("Redis Sub Error:", err));
+pubClient.on("error", (err) =>
+  console.error("Redis Pub Error:", err)
+);
+
+subscriber.on("error", (err) =>
+  console.error("Redis Sub Error:", err)
+);
 
 await pubClient.connect();
 await subscriber.connect();
 
-io = new Server({ cors: { origin: "*" } });
-io.listen(SOCKET_PORT, () => {
-  console.log(`Socket.io server is running on port ${SOCKET_PORT}`);
+io = new Server({
+  cors: {
+    origin: "*",
+  },
 });
+
+io.listen(SOCKET_PORT);
+console.log(`Socket.io server is running on port ${SOCKET_PORT}`);
 
 io.adapter(createAdapter(pubClient, subscriber));
 
 io.on("connection", (socket) => {
   socket.emit("message", "Connected to the socket");
+
   socket.on("Subscribe", (channel) => {
     socket.join(channel);
     socket.emit("message", `Joined ${channel}`);
   });
 });
 
-// Listening to `build_logs:*` subsicription requests
+// Listening to build_logs:* subscription requests
 await subscriber.pSubscribe("build_logs:*", (message, channel) => {
   io?.to(channel).emit("message", message);
+});
+
+// Express server start
+app.listen(PORT, () => {
+  console.log(`Logs API server is running on port ${PORT}`);
 });

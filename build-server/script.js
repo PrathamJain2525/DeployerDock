@@ -72,7 +72,7 @@ if (!PROJECT_ID) {
 
 // BASE_DIR is the directory where the code is located inside the cloned repository.
 // It is used to navigate to the correct path for building the project.
-const BASE_DIR = process.env.BASE_DIR || "";
+const BASE_DIR = (process.env.BASE_DIR || "").trim();
 
 async function init() {
   await publishLog("Build started for project: " + PROJECT_ID);
@@ -99,11 +99,11 @@ async function init() {
     await publishLog("ERROR: " + data.toString());
   });
 
-  const buildFolderName = process.env.BUILD_FOLDER_NAME || "dist";
+  const buildFolderName = (process.env.BUILD_FOLDER_NAME || "dist").trim();
   proc.on("close", async function () {
     console.log("Build Complete");
     await publishLog("Build completed for project: " + PROJECT_ID);
-    const distFolderPath = path.join(__dirname, "output", buildFolderName);
+    const distFolderPath = path.join(repoPath, buildFolderName);
     if (!fs.existsSync(distFolderPath)) {
       console.error(`Build folder does not exist: ${distFolderPath}`);
       await publishLog("Build folder does not exist: " + buildFolderName);

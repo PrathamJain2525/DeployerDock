@@ -16,7 +16,7 @@ app.use((req, res) => {
   const subdomain = hostName.split(".")[0];
   // FUTURE TASK: CUSTOM DOMAIN SUPPORT
 
-  const resolvesTo = `${BasePath}/${subdomain}`;
+  const resolvesTo = `${BasePath}/__output/${subdomain}`;
   proxy.web(req, res, { target: resolvesTo, changeOrigin: true });
 });
 

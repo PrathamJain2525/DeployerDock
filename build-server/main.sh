@@ -1,8 +1,12 @@
 #!/bin/bash
-# using the bin/bash - shebang (also called a hashbang) to tell the interpreter that we have to use bash to execute this file
 
-git clone "https://github.com/PrathamJain2525/mern-app-.git" /home/app/output
+export GIT_REPOSITORY_URL=$(echo "$GIT_REPOSITORY_URL" | xargs)
 
+if [ -z "$GIT_REPOSITORY_URL" ]; then
+  echo "GIT_REPOSITORY_URL is missing"
+  exit 1
+fi
 
-# executing out script file which performs all the tasks
+git clone "$GIT_REPOSITORY_URL" /home/app/output
+
 exec node script.js

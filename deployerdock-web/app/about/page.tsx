@@ -135,8 +135,7 @@ const techStack = [
               About Me
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-              Hi, I'm Pushpit Jain — a passionate Full Stack Engineer and the
-              solo creator of DeployerDock. This project is my personal journey
+              Hi, I'm Pratham Jain — a passionate Full Stack Engineer . This project is my personal journey
               to simplify deployments for developers everywhere.
             </p>
           </div>
@@ -151,7 +150,7 @@ const techStack = [
                   className="w-24 h-24 rounded-full mx-auto mb-4 object-cover"
                 />
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-                  Pushpit Jain
+                  Pratham Jain
                 </h3>
                 <Badge variant="secondary" className="mb-3">
                   Full Stack Engineer
@@ -162,22 +161,16 @@ const techStack = [
                   more.
                 </p>
                 <div className="flex justify-center space-x-3">
+                  
                   <a
-                    href="https://x.com/Pushpit_jain_18/"
-                    className="text-gray-400 hover:text-blue-500 transition-colors"
-                    aria-label="Twitter"
-                  >
-                    <Twitter className="w-4 h-4" />
-                  </a>
-                  <a
-                    href="https://www.linkedin.com/in/pushpitjain/"
+                    href="https://www.linkedin.com/in/prathamjain2525/"
                     className="text-gray-400 hover:text-blue-600 transition-colors"
                     aria-label="LinkedIn"
                   >
                     <Linkedin className="w-4 h-4" />
                   </a>
                   <a
-                    href="https://github.com/pushpitjain2006/"
+                    href="https://github.com/PrathamJain2525"
                     className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                     aria-label="GitHub"
                   >
@@ -234,24 +227,15 @@ const techStack = [
             className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
             asChild
           >
-            <a href="mailto:pushpitjain@2006.com">
+            <a href="mailto:prathamlogins25@gmail.com">
               <Mail className="w-4 h-4 mr-2" />
               Email Me
             </a>
           </Button>
+          
           <Button variant="outline" size="lg" asChild>
             <a
-              href="https://x.com/Pushpit_jain_18/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Twitter className="w-4 h-4 mr-2" />
-              Connect on Twitter
-            </a>
-          </Button>
-          <Button variant="outline" size="lg" asChild>
-            <a
-              href="https://www.linkedin.com/in/pushpitjain/"
+              href="https://www.linkedin.com/in/prathamjain2525/"
               target="_blank"
               rel="noopener noreferrer"
             >

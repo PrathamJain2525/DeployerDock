@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
   Plus,
-  // Settings,
   User,
   Calendar,
   Activity,
@@ -25,15 +24,18 @@ import {
   Rocket,
 } from "lucide-react";
 import Link from "next/link";
-import { UserButton, useUser, ClerkLoaded } from "@clerk/nextjs";
+import { UserButton, useUser } from "@clerk/nextjs";
 import { projectType } from "@/types/project";
 import { useTheme } from "@/context/ThemeContext";
 import { generateSlug } from "random-word-slugs";
 import { toast } from "sonner";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function Dashboard() {
+  const router = useRouter();
   const { isDarkMode, setIsDarkMode } = useTheme();
+  const { user } = useUser();
+
   const [formData, setFormData] = useState({
     gitUrl: "",
     projectName: generateSlug(),
@@ -42,73 +44,79 @@ export default function Dashboard() {
     buildCommand: "npm run build",
     buildFolder: "dist",
   });
-  const [projects, setProjects] = useState<projectType[]>([]);
-  const { user } = useUser();
+
+  const [projects, setProjects] = useState<Record<string, projectType>>({});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const setData = async () => {
-      const fetchedProjects = (await user?.publicMetadata
-        ?.projects) as projectType[];
-      setProjects(fetchedProjects || []);
-      console.log("Projects loaded:", projects);
-    };
-    setData();
+    const fetchedProjects =
+      (user?.publicMetadata?.projects as Record<string, projectType>) || {};
+    setProjects(fetchedProjects);
   }, [user]);
 
   const handleDeploy = async () => {
     setLoading(true);
-    console.log("Deploying with data:", formData);
-    if (!formData.gitUrl) {
+
+    const payload = {
+      GIT_REPOSITORY_URL: formData.gitUrl.trim(),
+      PROJECT_ID: formData.projectName.trim(),
+      BASE_DIR: formData.baseDir.trim(),
+      INSTALL_COMMAND: formData.installCommand.trim() || "npm install",
+      BUILD_COMMAND: formData.buildCommand.trim() || "npm run build",
+      BUILD_FOLDER_NAME: formData.buildFolder.trim() || "dist",
+      CREATED_AT: new Date().toISOString(),
+      LAST_DEPLOY: new Date().toISOString(),
+      STATUS: "Building",
+    };
+
+    if (!payload.GIT_REPOSITORY_URL) {
       toast.error("Git repository URL is required.");
+      setLoading(false);
       return;
     }
+
+    if (!payload.PROJECT_ID) {
+      toast.error("Project name is required.");
+      setLoading(false);
+      return;
+    }
+
     const res1 = await fetch("/api/addproject", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        GIT_REPOSITORY_URL: formData.gitUrl,
-        PROJECT_ID: formData.projectName,
-        BASE_DIR: formData.baseDir,
-        INSTALL_COMMAND: formData.installCommand,
-        BUILD_COMMAND: formData.buildCommand,
-        BUILD_FOLDER_NAME: formData.buildFolder,
-        CREATED_AT: new Date().toISOString(),
-        LAST_DEPLOY: new Date().toISOString(),
-        STATUS: "Building",
-      }),
+      body: JSON.stringify(payload),
     });
+
     if (!res1.ok) {
       toast.error("Failed to add project.");
+      setLoading(false);
       return;
     }
+
+    await user?.reload();
 
     const res = await fetch("/api/deploy", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        GIT_REPOSITORY_URL: formData.gitUrl,
-        PROJECT_ID: formData.projectName,
-        BASE_DIR: formData.baseDir,
-        INSTALL_COMMAND: formData.installCommand,
-        BUILD_COMMAND: formData.buildCommand,
-        BUILD_FOLDER_NAME: formData.buildFolder,
-      }),
+      body: JSON.stringify(payload),
     });
+
     if (!res.ok) {
       toast.error("Deployment failed.");
+      setLoading(false);
       return;
     }
+
+    toast.success("Deployment started.");
     setLoading(false);
-    redirect(`/projects/${formData.projectName}`);
+    router.push(`/projects/${payload.PROJECT_ID}`);
   };
 
   const getStatusIcon = (status: string) => {
-    console.log("Status:", status);
     switch (status) {
       case "Live":
         return <CheckCircle className="w-4 h-4 text-green-500" />;
@@ -123,11 +131,11 @@ export default function Dashboard() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "live":
+      case "Live":
         return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100";
-      case "building":
+      case "Building":
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100";
-      case "failed":
+      case "Failed":
         return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100";
       default:
         return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100";
@@ -136,25 +144,20 @@ export default function Dashboard() {
 
   const handlePreviewClick = (e: React.MouseEvent, projectId: string) => {
     e.preventDefault();
-    if (
-      !process.env.NEXT_PUBLIC_APP_URL_DOMAIN ||
-      process.env.NEXT_PUBLIC_APP_URL_DOMAIN.startsWith("localhost")
-    ) {
-      toast.error(
-        "Preview links are not available currently. Sorry for the inconvenience."
-      );
+
+    const domain = process.env.NEXT_PUBLIC_APP_URL_DOMAIN;
+
+    if (!domain) {
+      toast.error("Preview domain is missing.");
       return;
     }
-    window.open(
-      `http://${projectId}.${process.env.NEXT_PUBLIC_APP_URL_DOMAIN}`,
-      "_blank"
-    );
+
+    window.open(`http://${projectId}.${domain}`, "_blank");
   };
 
   return (
     <div className={`${isDarkMode ? "dark" : ""}`}>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-        {/* Header */}
         <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200 dark:border-gray-700">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
@@ -166,11 +169,8 @@ export default function Dashboard() {
                   DeployerDock
                 </span>
               </div>
+
               <div className="flex items-center space-x-4">
-                {/* <Button variant="outline" size="sm">
-                <Settings className="w-4 h-4 mr-2" />
-                Settings
-              </Button> */}
                 <button
                   onClick={() => setIsDarkMode(!isDarkMode)}
                   className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
@@ -192,7 +192,6 @@ export default function Dashboard() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid lg:grid-cols-4 gap-8">
-            {/* Sidebar */}
             <div className="lg:col-span-1">
               <Card className="backdrop-blur-xl bg-white/50 dark:bg-gray-800/50 border border-white/20 dark:border-gray-700/20">
                 <CardHeader>
@@ -201,6 +200,7 @@ export default function Dashboard() {
                     <span>Profile</span>
                   </CardTitle>
                 </CardHeader>
+
                 <CardContent className="space-y-4">
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -208,30 +208,36 @@ export default function Dashboard() {
                     </p>
                     <p className="font-medium">{user?.fullName}</p>
                   </div>
+
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       Email
                     </p>
-                    <p className="font-medium">{`${user?.emailAddresses[0]}`}</p>
+                    <p className="font-medium">
+                      {user?.emailAddresses?.[0]?.emailAddress}
+                    </p>
                   </div>
+
                   <Separator />
+
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600 dark:text-gray-400">
                         Deployments
                       </span>
                       <span className="font-medium">
-                        {Object.entries(projects)?.length}
+                        {Object.values(projects).length}
                       </span>
                     </div>
+
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600 dark:text-gray-400">
                         Active Projects
                       </span>
                       <span className="font-medium">
                         {
-                          Object.entries(projects)?.filter(
-                            ([_, project]) => project.STATUS !== "Failed"
+                          Object.values(projects).filter(
+                            (project) => project.STATUS !== "Failed"
                           ).length
                         }
                       </span>
@@ -241,9 +247,7 @@ export default function Dashboard() {
               </Card>
             </div>
 
-            {/* Main Content */}
             <div className="lg:col-span-3 space-y-8">
-              {/* Quick Deploy */}
               <Card className="backdrop-blur-xl bg-white/50 dark:bg-gray-800/50 border border-white/20 dark:border-gray-700/20">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
@@ -251,6 +255,7 @@ export default function Dashboard() {
                     <span>New Deployment</span>
                   </CardTitle>
                 </CardHeader>
+
                 <CardContent>
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -265,6 +270,7 @@ export default function Dashboard() {
                         }
                       />
                     </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="projectName">Project Name</Label>
                       <div className="flex items-center space-x-2">
@@ -279,6 +285,7 @@ export default function Dashboard() {
                             })
                           }
                         />
+
                         <Button
                           type="button"
                           variant="outline"
@@ -296,17 +303,19 @@ export default function Dashboard() {
                         </Button>
                       </div>
                     </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="baseDir">Base Directory (Optional)</Label>
+                      <Label htmlFor="baseDir">Base Directory Optional</Label>
                       <Input
                         id="baseDir"
-                        placeholder="./"
+                        placeholder="Leave empty for root"
                         value={formData.baseDir}
                         onChange={(e) =>
                           setFormData({ ...formData, baseDir: e.target.value })
                         }
                       />
                     </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="installCommand">Install Command</Label>
                       <Input
@@ -320,6 +329,7 @@ export default function Dashboard() {
                         }
                       />
                     </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="buildCommand">Build Command</Label>
                       <Input
@@ -333,6 +343,7 @@ export default function Dashboard() {
                         }
                       />
                     </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="buildFolder">Build Folder</Label>
                       <Input
@@ -347,24 +358,20 @@ export default function Dashboard() {
                       />
                     </div>
                   </div>
+
                   <div className="mt-6">
                     <Button
                       className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
                       disabled={loading}
-                      asChild
                       onClick={handleDeploy}
                     >
-                      <div>
-                        {" "}
-                        <Zap className="w-4 h-4 mr-2" />
-                        Deploy Now
-                      </div>
+                      <Zap className="w-4 h-4 mr-2" />
+                      {loading ? "Deploying..." : "Deploy Now"}
                     </Button>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Projects List */}
               <Card className="backdrop-blur-xl bg-white/50 dark:bg-gray-800/50 border border-white/20 dark:border-gray-700/20">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
@@ -372,6 +379,7 @@ export default function Dashboard() {
                       <Activity className="w-5 h-5" />
                       <span>Your Projects</span>
                     </div>
+
                     <Link href="/projects">
                       <Button variant="outline" size="sm">
                         View All
@@ -379,9 +387,10 @@ export default function Dashboard() {
                     </Link>
                   </CardTitle>
                 </CardHeader>
+
                 <CardContent>
                   <div className="space-y-4">
-                    {Object.entries(projects).map(([key, project]) => (
+                    {Object.values(projects).map((project) => (
                       <div
                         key={project.PROJECT_ID}
                         className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -393,6 +402,7 @@ export default function Dashboard() {
                               <h3 className="font-medium">
                                 {project.PROJECT_ID}
                               </h3>
+
                               <div className="text-sm text-gray-600 dark:text-gray-400">
                                 <div className="flex items-center gap-2">
                                   <Calendar className="w-3 h-3" />
@@ -401,6 +411,7 @@ export default function Dashboard() {
                                     project.CREATED_AT
                                   ).toLocaleString()}
                                 </div>
+
                                 <div>
                                   Last deploy{" "}
                                   {new Date(
@@ -411,23 +422,23 @@ export default function Dashboard() {
                             </div>
                           </div>
                         </div>
+
                         <div className="flex items-center space-x-2">
                           <Badge className={getStatusColor(project.STATUS)}>
                             {project.STATUS}
                           </Badge>
+
                           <Button
                             variant="outline"
                             size="sm"
-                            asChild
                             onClick={(e) =>
                               handlePreviewClick(e, project.PROJECT_ID)
                             }
                           >
-                            <div>
                             <ExternalLink className="w-3 h-3 mr-1" />
                             Preview
-                            </div>
                           </Button>
+
                           <Button variant="outline" size="sm" asChild>
                             <Link href={`/projects/${project.PROJECT_ID}`}>
                               <Eye className="w-3 h-3 mr-1" />

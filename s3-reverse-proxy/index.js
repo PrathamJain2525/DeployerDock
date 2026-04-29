@@ -14,13 +14,13 @@ app.get("/", (req, res) => {
   res.send("S3 reverse proxy running");
 });
 
-// Redirect /projectId to /projectId/
-app.get("/:projectId", (req, res) => {
-  res.redirect(301, `/${req.params.projectId}/`);
-});
-
 app.use("/:projectId", (req, res) => {
   const projectId = req.params.projectId;
+
+  // Redirect only if URL does NOT end with /
+  if (req.url === "/" && !req.originalUrl.endsWith("/")) {
+    return res.redirect(308, `/${projectId}/`);
+  }
 
   if (req.url === "/") {
     req.url = "/index.html";

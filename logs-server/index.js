@@ -4,61 +4,42 @@ import { Server } from "socket.io";
 import { createClient } from "redis";
 import { createAdapter } from "@socket.io/redis-adapter";
 import cors from "cors";
+import http from "http";
 
 dotenv.config();
 
-const PORT = parseInt(process.env.PORT, 10) || 9000;
-const SOCKET_PORT = process.env.SOCKET_PORT || PORT + 1 || 9001;
+const PORT = parseInt(process.env.PORT || "9000", 10);
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Socket.io setup
-const REDIS_HOST = process.env.REDIS_HOST;
-const REDIS_PORT = parseInt(process.env.REDIS_PORT || "6379");
-const REDIS_USERNAME = process.env.REDIS_USERNAME || "default";
-const REDIS_PASSWORD = process.env.REDIS_PASSWORD;
+const server = http.createServer(app);
 
-if (!REDIS_HOST || !REDIS_PASSWORD) {
-  console.error("Redis credentials are not set properly in env.");
-}
-
-let io = null;
-let subscriber = null;
-
-const pubClient = createClient({
-  username: REDIS_USERNAME,
-  password: REDIS_PASSWORD,
-  socket: {
-    host: REDIS_HOST,
-    port: REDIS_PORT,
-  },
-});
-
-subscriber = pubClient.duplicate();
-
-pubClient.on("error", (err) =>
-  console.error("Redis Pub Error:", err)
-);
-
-subscriber.on("error", (err) =>
-  console.error("Redis Sub Error:", err)
-);
-
-await pubClient.connect();
-await subscriber.connect();
-
-io = new Server({
+const io = new Server(server, {
   cors: {
     origin: "*",
   },
 });
 
-io.listen(SOCKET_PORT);
-console.log(`Socket.io server is running on port ${SOCKET_PORT}`);
+const pubClient = createClient({
+  username: process.env.REDIS_USERNAME || "default",
+  password: process.env.REDIS_PASSWORD,
+  socket: {
+    host: process.env.REDIS_HOST,
+    port: parseInt(process.env.REDIS_PORT || "6379", 10),
+  },
+});
 
-io.adapter(createAdapter(pubClient, subscriber));
+const subClient = pubClient.duplicate();
+
+pubClient.on("error", (err) => console.error("Redis Pub Error:", err));
+subClient.on("error", (err) => console.error("Redis Sub Error:", err));
+
+await pubClient.connect();
+await subClient.connect();
+
+io.adapter(createAdapter(pubClient, subClient));
 
 io.on("connection", (socket) => {
   socket.emit("message", "Connected to the socket");
@@ -69,12 +50,14 @@ io.on("connection", (socket) => {
   });
 });
 
-// Listening to build_logs:* subscription requests
-await subscriber.pSubscribe("build_logs:*", (message, channel) => {
-  io?.to(channel).emit("message", message);
+await subClient.pSubscribe("build_logs:*", (message, channel) => {
+  io.to(channel).emit("message", message);
 });
 
-// Express server start
-app.listen(PORT, () => {
-  console.log(`Logs API server is running on port ${PORT}`);
+app.get("/", (req, res) => {
+  res.send("Logs server running");
+});
+
+server.listen(PORT, () => {
+  console.log(`Logs server running on port ${PORT}`);
 });

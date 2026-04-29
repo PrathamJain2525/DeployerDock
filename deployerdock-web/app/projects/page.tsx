@@ -81,12 +81,12 @@ export default function ProjectsPage() {
       );
       return;
     }
-    if (PROJECT_ID) {
-      window.open(
-        `https://${PROJECT_ID}.${process.env.NEXT_PUBLIC_APP_URL_DOMAIN}`,
-        "_blank"
-      );
-    }
+   if (PROJECT_ID) {
+  window.open(
+    `${process.env.NEXT_PUBLIC_APP_URL_DOMAIN}/${PROJECT_ID}`,
+    "_blank"
+  );
+}
   };
 
   return (

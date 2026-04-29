@@ -279,7 +279,7 @@ export default function ProjectDetailsPage() {
       return;
     }
 
-   window.open(`${domain}/${project.PROJECT_ID}`, "_blank");
+   window.open(`${domain}/${project.PROJECT_ID}/`, "_blank");
   };
 
   if (!isLoaded) {

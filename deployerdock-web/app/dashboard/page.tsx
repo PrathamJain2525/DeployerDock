@@ -152,7 +152,7 @@ export default function Dashboard() {
       return;
     }
 
-    window.open(`${domain}/${projectId}`, "_blank");
+  window.open(`${domain}/${projectId}/`, "_blank");
   };
 
   return (

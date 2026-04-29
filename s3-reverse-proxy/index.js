@@ -10,22 +10,23 @@ const proxy = httpProxy.createProxyServer();
 
 const BasePath = process.env.BasePathURL;
 
+app.get("/", (req, res) => {
+  res.send("S3 reverse proxy running");
+});
+
 app.use("/:projectId", (req, res) => {
   const projectId = req.params.projectId;
-  const resolvesTo = `${BasePath}/__output/${projectId}`;
 
   if (req.url === "/") {
     req.url = "/index.html";
   }
 
+  const resolvesTo = `${BasePath}/__output/${projectId}`;
+
   proxy.web(req, res, {
     target: resolvesTo,
     changeOrigin: true,
   });
-});
-
-app.get("/", (req, res) => {
-  res.send("S3 reverse proxy running");
 });
 
 proxy.on("error", (err, req, res) => {

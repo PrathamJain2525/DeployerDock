@@ -156,7 +156,7 @@ const techStack = [
                   Full Stack Engineer
                 </Badge>
                 <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-                  Software engineering student at Delhi Technological University
+                  Engineering student at Delhi Technological University
                   with expertise in Next.js, Node.js, cloud infrastructure and
                   more.
                 </p>
